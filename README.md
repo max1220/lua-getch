@@ -15,7 +15,7 @@ To build this Module you need:
 
 Install in Debian/Ubuntu:
 
-    sudo apt-get install lua5.1 liblua5.1-0-dev
+    sudo apt-get install lua5.1 liblua5.1-0-dev gcc
 
 
 
