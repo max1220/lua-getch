@@ -1,9 +1,9 @@
-lua-getkey
-==========
+lua-getch
+=========
 
 Description
 -----------
-Provides a getkey function for Lua that allows getting Keyboard codes unbuffered.
+Provides a getch function for Lua that allows getting Keyboard codes unbuffered, optionally non-blocking.
 This allows, for example, the creation of Terminal GUI's.
 
 
@@ -21,27 +21,29 @@ Install in Debian/Ubuntu:
 
 Build
 -----
-The build process is straight-forward:
 
-    cd getkey
-    ./make.sh
+    make
 
-The build module is in getkey/getkey.so.
+The build module is getch.so. Install by putting it somewhere in Lua's package.cpath:
+
+    lua -e "print(package.path:gsub(';', '\n'):gsub('?', '[?]'))"
 
 
 
-Test
-----
-For a quick test run example/example1.lua.
-It should print the byte values of inputed keys.
+
+Examples
+--------
+Examples are in the examples/ folder.
 
 
 
 Usage
 -----
-The module exports 1 function:
-* getkey():
-  + Gets the next input byte.
+The module exports 2 functions:
+* getch():
+  + Gets the next input byte, blocking
+* getch_non_blocking():
+  + Gets the next input byte, non-blocking
 
 Please note that in order to get the full keycode you need to call this function multiple times, since Keycodes are multi-byte!
 
@@ -54,12 +56,3 @@ Example:
     end
 
 (Prints the keycodes of pressed keys.)
-
-__For more examples, please have a look at the examples/ directory!__
-
-Please note that in order to make Lua find the module, you need to copy it to Lua's default search path,
-To list the folders Lua looks for Modules, please use:
-
-    lua -e "print(package.path:gsub(';', '\n'):gsub('?', '[?]'))"
-
-Where [?] is the module's filename.
