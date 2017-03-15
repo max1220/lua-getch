@@ -5,7 +5,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
-static int l_getch(lua_State *L) {
+static int l_getch_blocking(lua_State *L) {
 	unsigned char ch;
 	struct termios oldt, newt;
 	tcgetattr ( STDIN_FILENO, &oldt );
@@ -43,8 +43,8 @@ static int l_getch_non_blocking(lua_State *L) {
 
 int luaopen_getch(lua_State *L) {
 	luaL_Reg functions[] = {
-		{"getch", l_getch},
-		{"getch_non_blocking", l_getch_non_blocking},
+		{"blocking", l_getch_blocking},
+		{"non_blocking", l_getch_non_blocking},
 		{NULL, NULL}
 	};
 
