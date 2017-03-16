@@ -41,6 +41,7 @@ static int l_getch_non_blocking(lua_State *L) {
 	}
 
 	tcsetattr ( STDIN_FILENO, TCSANOW, &oldt );
+	fcntl(0, F_SETFL, flags);
 
 	lua_pushnumber(L, (int)ch);
 	return 1;
