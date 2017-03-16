@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
@@ -23,6 +24,10 @@ static int l_getch_non_blocking(lua_State *L) {
 	unsigned char ch;
 	int r;
 	struct termios oldt, newt;
+	int flags = fcntl(0, F_GETFL, 0);
+	
+	fcntl(0, F_SETFL, flags | O_NONBLOCK );
+	
 	tcgetattr ( STDIN_FILENO, &oldt );
 	newt = oldt;
 	newt.c_lflag &= ~( ICANON | ECHO );
