@@ -1,32 +1,20 @@
 #!/usr/bin/env luajit
-local getch = require("getch").blocking
+local getch = require("getch")
 
 local keys = {
-  [27]= {
-    [91] = {
-      [65] = "up",
-      [66] = "down",
-      [67] = "right",
-      [68] = "left"
-    }
-  }
+  [getch.KEY_ENTER] = "enter",
+  [getch.KEY_ESCAPE] = "escape",
+  [getch.KEY_SPACE] = "space",
+  [getch.KEY_LEFT] = "left",
+  [getch.KEY_RIGHT] = "right",
+  [getch.KEY_UP] = "up",
+  [getch.KEY_DOWN] = "down"
 }
 
-function get_key(keys_table)
-  local keys_table = keys_table or keys
-  local ch = getch() -- Read a byte of stdinput
-  local ret = keys_table[ch]
-  if ret then
-    if type(ret) == "string" then
-      return ret
-    elseif type(ret) == "table" then
-      return get_key(ret)
-    end
-  else
-    return nil, ch
-  end
+function get_key()
+  local ch = getch.blocking() -- Read a byte of stdinput
+  return keys[ch] or nil, ch
 end
-
 
 print("Press arrow keys or any character.")
 while true do

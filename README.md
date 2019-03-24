@@ -6,7 +6,9 @@ Description
 Provides a getch function for Lua that allows getting Keyboard codes unbuffered, optionally non-blocking.
 This allows, for example, the creation of Terminal GUI's.
 
-
+Has built in support for determining whether a key press was the Escape key, or an escape code such as an 
+arrows key. This approximates ncurses' `keypad(win, TRUE)` mode but without requiring a dependency on
+ncurses. This functionality is only available in the `blocking` call.
 
 Dependencies
 ------------
@@ -44,8 +46,6 @@ The module exports 2 functions:
   + Gets the next input byte, blocking
 * getch_non_blocking():
   + Gets the next input byte, non-blocking
-
-Please note that in order to get the full keycode you need to call this function multiple times, since Keycodes are multi-byte!
 
 Example:
 
