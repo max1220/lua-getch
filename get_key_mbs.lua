@@ -1,6 +1,8 @@
-#!/usr/bin/env luajit
+-- this library is used to get a key from stdin, resolving multi-byte
+-- sequences automaticall
 
-local getch = require("lua-getch")
+
+
 
 
 -- multibyte sequences are resolved by using this table.
@@ -19,7 +21,7 @@ local default_key_table = {
 }
 
 -- get a key, and resolve defined multibyte sequences. (recursive)
-local function get_key(get_ch, key_table, i)
+local function get_key_mbs(get_ch, key_table, i)
 	local key_table = key_table or default_key_table
 	local i = i or 1
 	local key_code = get_ch()
@@ -38,17 +40,4 @@ local function get_key(get_ch, key_table, i)
 	end
 end
 
-
-print("Press arrow keys or any character.")
-while true do
-	local key_code, key_resolved = get_key(getch.blocking)
-	if key_code then
-		local char = ""
-		if not key_resolved then
-			char = string.char(key_code)
-		end
-		print(("Got key: code=%.3d, key=%s, char=%s"):format(key_code, key_resolved or "", char))
-	end
-end
-
-
+return get_key_mbs
