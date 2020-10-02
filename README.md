@@ -3,15 +3,15 @@
 Provides a getch function for Lua that allows getting Keyboard codes unbuffered, optionally non-blocking.
 This allows, for example, the creation of Terminal GUI's.
 
-Has built in support for determining whether a key press was the Escape key, or an escape code such as an
-arrows key. This approximates ncurses' `keypad(win, TRUE)` mode but without requiring a dependency on
-ncurses.
+Provides utillity function for decoding multi-byte sequences.
+This approximates ncurses' `keypad(win, TRUE)` mode but without requiring a dependency on ncurses.
 
 
 
 # Dependencies
 
 To build this Module you need:
+
  * Lua 5.1 + headers
 
 Install in Debian/Ubuntu:
@@ -24,13 +24,15 @@ Install in Debian/Ubuntu:
 
     make
 
-The build module is getch.so. Install by putting it somewhere in Lua's package.cpath:
+The build module is getch.so. Install by running
 
-    lua -e "print(package.path:gsub(';', '\n'):gsub('?', '[?]'))"
+	make install
+
+This will install the C module `getch.so` to `/usr/local/lib/lua/5.1/`, and
+the Lua module from `lua/` to `/usr/local/share/lua/5.1/lua-db/`.
 
 
-
-# Examples
+# Example 'simple.lua'
 
 	-- simple.lua, print the character code as a number
     #!/usr/bin/lua
@@ -40,6 +42,8 @@ The build module is getch.so. Install by putting it somewhere in Lua's package.c
 	end
 
 
+
+# Example 'resolve.lua'
 
 	-- resolve.lua, print a resolved character code
 	#!/usr/bin/lua
