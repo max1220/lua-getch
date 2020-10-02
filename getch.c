@@ -47,9 +47,9 @@ static int l_getch_non_blocking(lua_State *L) {
 	int r;
 	struct termios oldt, newt;
 	int flags = fcntl(0, F_GETFL, 0);
-	
+
 	fcntl(0, F_SETFL, flags | O_NONBLOCK );
-	
+
 	tcgetattr ( STDIN_FILENO, &oldt );
 	newt = oldt;
 	newt.c_lflag &= ~( ICANON | ECHO );
@@ -65,21 +65,11 @@ static int l_getch_non_blocking(lua_State *L) {
 	tcsetattr ( STDIN_FILENO, TCSANOW, &oldt );
 	fcntl(0, F_SETFL, flags);
 
-	lua_pushnumber(L, (int)ch);
 	return 1;
 }
 
 
 int luaopen_getch(lua_State *L) {
-	lua_newtable(L);
-	LUA_T_PUSH_S_CF("blocking", l_getch_blocking)
-	LUA_T_PUSH_S_CF("non_blocking", l_getch_non_blocking)
-	return 1;
-}
-
-
-
-int luaopen_getch_getch(lua_State *L) {
 	lua_newtable(L);
 	LUA_T_PUSH_S_CF("blocking", l_getch_blocking)
 	LUA_T_PUSH_S_CF("non_blocking", l_getch_non_blocking)
