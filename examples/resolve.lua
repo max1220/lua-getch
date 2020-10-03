@@ -14,10 +14,11 @@ local key_table = {
 }
 
 while true do
+	-- call getch.get_mbs to automatically resolve known key sequences on keypress.
 	local key_code, key_resolved = getch.get_mbs(getch.blocking, key_table)
 	if key_resolved then
-		print("Arrow key pressed:", key_resolved)
+		print("Arrow: ", key_resolved)
 	else
-		print("Other key pressed:", key_code)
+		print("Unknown key pressed:", key_code)
 	end
 end
