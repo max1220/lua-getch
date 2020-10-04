@@ -29,7 +29,7 @@ The build module is getch.so. Install by running
 	make install
 
 This will install the C module `getch.so` to `/usr/local/lib/lua/5.1/`, and
-the Lua module from `lua/` to `/usr/local/share/lua/5.1/lua-db/`.
+the Lua module from `lua/` to `/usr/local/share/lua/5.1/lua-getch/`.
 
 
 # Example 'simple.lua'
