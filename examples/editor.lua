@@ -117,19 +117,130 @@ local reset_all = reset_sgr .. clear_screen .. reset_cursor
 local set_cursor_fmt = "\027[%d;%dH"
 -- luacheck: unused
 
-
-
 -- list of buffers currently open
 local buffers = {}
 
 
+local menu_item_file_save_to = {
+	name="Save to",
+	text="",
+	callback = function(item, buf)
+		if #item.text>0 then
+			buf:save_to_file(item.text)
+			return true
+		end
+	end,
+	update = function(item, buf)
+		item.text = buf.filepath
+	end
+}
+local menu_item_file_save = {
+	name = "Save",
+	callback = function(self, buf)
+		buf:save()
+		return true
+	end
+}
+local menu_item_file_load_from = {
+	name="Load from",
+	text="",
+	callback = function(item, buf)
+		if #item.text>0 then
+			buf:load_from_file(item.text)
+			return true
+		end
+	end,
+	update = function(item, buf)
+		item.text = buf.filepath
+	end
+}
+local menu_item_file_load = {
+	name = "Load",
+	callback = function(self, buf)
+		buf:load()
+		return true
+	end
+}
+local menu_item_file_line_ending = {
+	name = "Line ending",
+	callback = function(item,buf)
+		if buf.line_format=="\n" then
+			buf.line_format="\n"
+		else
+			buf.line_format="\r\n"
+		end
+	end,
+	update = function(item, buf)
+		item.value = (buf.line_format=="\n") and "\\n" or "\\r\\n"
+	end
+}
+local menu_item_file_tab_width = {
+	name = "Tab width",
+	callback = function(item, buf)
+		local tw = tonumber(item.text)
+		if tw and (tw>=0) and (tw<=24) then
+			buf.tab_width = tw
+			return true
+		end
+	end,
+	update = function(item, buf)
+		item.value = tostring(buf.tab_width)
+	end
+}
+local menu_item_file_autoindent = {
+	name="Toggle Autoindent",
+	callback = function(item, buf)
+		buf.auto_indent = not buf.auto_indent
+		return true
+	end,
+	update = function(item, buf)
+		item.value = tostring(buf.auto_indent)
+	end
+}
+local menu_item_file_linenumbers = {
+	name="Toggle Line numbers",
+	callback = function(item, buf)
+		buf.line_numbers = not buf.line_numbers
+		return true
+	end,
+	update = function(item, buf)
+		item.value = tostring(buf.line_numbers)
+	end
+}
+local menu_item_file_soft_wrap = {
+	name="Toggle Soft wrap",
+	callback = function(item, buf)
+		buf.soft_wrap = not buf.soft_wrap
+		return true
+	end,
+	update = function(item, buf)
+		item.value = tostring(buf.soft_wrap)
+	end
+}
+local menu_item_file_hard_wrap = {
+	name="Toggle Hard wrap",
+	callback = function(item, buf)
+		buf.hard_wrap = not buf.hard_wrap
+		return true
+	end,
+	update = function(item, buf)
+		item.value = tostring(buf.hard_wrap)
+	end
+}
+local menu_item_file_close = {
+	name="Close",
+	callback = function(item, buf)
+		buf:remove(buffers)
+		return true
+	end
+}
+
 -- return a new, empty buffer
-local new_file_buffer
-local function new_buffer()
+function buffers:new_buffer()
 	local buffer = {}
 
 	buffer.content = ""
-	buffer.lines = {}
+	buffer.lines = {""}
 	buffer.type = "buffer"
 
 	buffer.name = "Empty buffer" -- display name
@@ -149,180 +260,110 @@ local function new_buffer()
 	buffer.auto_indent = true -- auto-indent new lines?
 
 	buffer.file_menu = {
-		{ name="Save to", text="", callback = function(self, buf)
-			if #self.text>0 then
-				buf:save_to_file(self.text)
-				buf.filename = self.text
-				buf.name = self.text
-				return true
-			end
-		end},
-		{ name="Load from", text="", callback = function(self, buf)
-			if #self.text>0 then
-				buf:load_from_file(self.text)
-				buf.filename = self.text
-				buf.name = self.text
-				return true
-			end
-		end},
-		{
-			name = "Line ending",
-			children = {
-				{ name = "set line ending to \"\\n\"", callback=function(self, buf)
-					buf.line_format="\n"
-					return true
-				end },
-				{ name = "set line ending to \"\\r\\n\"", callback=function(self, buf)
-					buf.line_format="\r\n"
-					return true
-				end },
-			}
-		},
-		{
-			name = "Tab width",
-			text = tostring(buffer.tab_width),
-			callback = function(self, buf)
-				local tw = math.floor(tonumber(self.text))
-				if tw>=0 and tw<=24 then
-					buf.tab_width = tw
-					return true
-				end
-			end
-		},
-		{ name="Hex Editor" },
-		{ name="Toggle Autoindent", value=tostring(buffer.auto_indent), callback = function(self, buf)
-			buf.auto_indent = not buf.auto_indent
-			self.value = tostring(buf.auto_indent)
-			return true
-		end },
-		{ name="Toggle Line numbers", value=tostring(buffer.auto_indent), callback = function(self, buf)
-			buf.line_numbers = not buf.line_numbers
-			self.value = tostring(buf.line_numbers)
-			return true
-		end },
-		{ name="Toggle Soft wrap", value=tostring(buffer.soft_wrap), callback = function(self, buf)
-			buf.soft_wrap = not buf.soft_wrap
-			self.value = tostring(buf.soft_wrap)
-			return true
-		end },
-		{ name="Toggle Hard wrap", value=tostring(buffer.hard_wrap), callback = function(self, buf)
-			buf.hard_wrap = not buf.hard_wrap
-			self.value = tostring(buf.hard_wrap)
-			return true
-		end },
-		{ name="Close", callback=function(self, buf)
-			buf:remove(buffers)
-			return true
-		end},
+		menu_item_file_save_to,
+		menu_item_file_load_from,
+		menu_item_file_line_ending,
+		menu_item_file_tab_width,
+		menu_item_file_autoindent,
+		menu_item_file_linenumbers,
+		menu_item_file_soft_wrap,
+		menu_item_file_hard_wrap,
+		menu_item_file_close,
 	}
 
 	-- all buffers can load content from a file
-	function buffer:load_from_file(filepath)
+	function buffer.load_from_file(buf, filepath)
 		if file_exists(filepath) then
-			new_file_buffer(filepath, self) -- transform self into a file_buffer
-			self:load()
-			self:content_to_lines()
+			self:new_file_buffer(filepath, buf) -- transform self into a file_buffer
+			buf:load()
+			buf:content_to_lines()
+			buf.filename = filepath
+			buf.name = filepath
 		end
 	end
 
 	-- all buffers can export content to a file
-	function buffer:save_to_file(filepath)
+	function buffer.save_to_file(buf, filepath)
 		local file = io.open(filepath, "w")
 		if file then
 			file:close()
-			new_file_buffer(filepath, self) -- transform self into a file_buffer
-			self:save() -- save to default path
+			buf:new_file_buffer(filepath, buf) -- transform self into a file_buffer
+			buf:save() -- save to default path
+			buf.filename = filepath
+			buf.name = filepath
 		end
 	end
 
 	-- convert the line-bases lines_content back to the string representation content
-	function buffer:lines_to_content()
-		self.content = table.concat(self.lines, "\n")
+	function buffer.lines_to_content(buf)
+		buf.content = table.concat(buf.lines, "\n")
 	end
 
-	function buffer:content_to_lines()
-		self.lines = split_by_pattern(self.content, "\n")
-	end
-	function buffer:remove(buffers)
-		local i
-		for k,v in ipairs(buffers) do
-			if v == self then
-				i = k
-				break
-			end
-		end
-		if i and #buffers>1 then
-			table.remove(buffers, i)
-			if buffers.current_buffer == self then
-				buffers.current_buffer = buffers[1]
-			end
-		end
+	function buffer.content_to_lines(buf)
+		buf.lines = split_by_pattern(buf.content, "\n")
 	end
 
 	return buffer
 end
 
 -- return a new file buffer(no file content has been loaded yet!)
-function new_file_buffer(filepath, _buffer)
-	local file_buffer = _buffer or new_buffer()
+function buffers:new_file_buffer(filepath, _buffer)
+	local file_buffer = _buffer or self:new_buffer()
 	file_buffer.type = "file"
 	file_buffer.filepath = filepath -- used when reloading the buffer
 	file_buffer.name = filepath
 
-	function file_buffer:save()
-		local f = io.open(self.filepath, "w")
+	function file_buffer.save(buf)
+		local f = io.open(buf.filepath, "w")
 		if not f then
 			return nil, "Can't open file for writing: " .. tostring(filepath)
 		end
-		self.modified = false
-		self:lines_to_content()
-		f:write(self.content)
+		buf.modified = false
+		buf:lines_to_content()
+		f:write(buf.content)
 		f:close()
 	end
-	function file_buffer:load()
-		local f = io.open(self.filepath, "r")
+	function file_buffer.load(buf)
+		local f = io.open(buf.filepath, "r")
 		if not f then
 			return nil, "Can't open file for reading: " .. tostring(filepath)
 		end
-		self.content = f:read("*a")
-		self:content_to_lines()
-		self.modified = false
+		buf.content = f:read("*a")
+		buf:content_to_lines()
+		buf.modified = false
 		f:close()
 	end
 
-	table.insert(file_buffer.file_menu, 1, {
-		name = "Save",
-		callback = function(self, buf)
-			buf:save()
-			return true
-		end
-	})
-	table.insert(file_buffer.file_menu, 2, {
-		name = "Load",
-		callback = function(self, buf)
-			buf:load()
-			return true
-		end
-	})
-	file_buffer.file_menu[3].text = filepath
-	file_buffer.file_menu[4].text = filepath
+
+	file_buffer.file_menu = {
+		menu_item_file_save,
+		menu_item_file_save_to,
+		menu_item_file_load,
+		menu_item_file_load_from,
+		menu_item_file_line_ending,
+		menu_item_file_tab_width,
+		menu_item_file_autoindent,
+		menu_item_file_linenumbers,
+		menu_item_file_soft_wrap,
+		menu_item_file_hard_wrap,
+		menu_item_file_close,
+	}
 
 	return file_buffer
 end
 
-
-local function new_lua_buffer()
-	local lua_buffer = new_buffer()
+-- return a new Lua buffer(used for executing Lua, viewing results)
+function buffers:new_lua_buffer()
+	local lua_buffer = self:new_buffer()
 	lua_buffer.type = "lua"
 	lua_buffer.name = "Lua Buffer"
 
-	local output_buffer = new_buffer()
+	local output_buffer = self:new_buffer()
 	output_buffer.name = "Lua Buffer Output"
 	lua_buffer.output_buffer = output_buffer
 
 	lua_buffer.file_menu = {
 		{ name = "Run in editor" },
-		{ name = "Save as", text="" },
 		{ name = "Save as", text="" },
 		{ name = "Run as temporary file" },
 		{ name = "View output" },
@@ -330,6 +371,36 @@ local function new_lua_buffer()
 	}
 end
 
+-- remove a buffer from the buffer list. If found, buffer is removed and returned
+function buffers:remove(buf)
+	for k,v in ipairs(self) do
+		if (v == buf) and (#self>1) then
+			table.remove(self, k)
+			if buffers.current_buffer == self then
+				buffers.current_buffer = buffers[1]
+			end
+			return buf
+		end
+	end
+end
+
+-- create a new buffer with optional content, append to buffer list
+function buffers:add_new_buffer(content)
+	local bufffer = self:new_buffer()
+	bufffer.content = tostring(content or "")
+	bufffer:content_to_lines()
+	table.insert(buffers, bufffer)
+	return bufffer, #buffers
+end
+
+-- create a new file buffer, load content from file, and append to buffer list
+function buffers:add_new_file_buffer(filepath)
+	local file_buffer = self:new_file_buffer(filepath)
+	file_buffer:load() -- load content from disk,
+	file_buffer:content_to_lines() -- convert content to lines
+	table.insert(buffers, file_buffer)
+	return file_buffer, #buffers
+end
 
 
 
@@ -439,83 +510,182 @@ local function editor_draw(buffer, no_topline)
 	flush()
 end
 
-local function clipboard_cut_line(buffer)
-	clipboard = table.remove(buffer.lines, buffer.current_line)
-	buffer:lines_to_content()
-	buffer.current_column = 1
-	buffer.modified = true
-end
-local function clipboard_copy_line(buffer)
-	clipboard = buffer.lines[buffer.current_line]
-end
-local function clipboard_copy_cursor(buffer)
-	clipboard = buffer.lines[buffer.current_line]:sub(buffer.current_column)
-end
-local function clipboard_paste_line(buffer)
-	if clipboard then
-		table.insert(buffer.lines, buffer.current_line, clipboard)
-		buffer:lines_to_content()
-		buffer.current_column = #clipboard+1
-		buffer.modified = true
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local menu_item_edit_clipboard_copy_line = {
+	name = "Copy line",
+	callback = function(item, buf)
+		clipboard = buf.lines[buf.current_line]
+		return true
 	end
-end
-local function clipboard_paste_cursor(buffer)
-	if clipboard then
-		local line = buffer.lines[buffer.current_line]
-		local left = line:sub(1, buffer.current_column-1)
-		local right = line:sub(buffer.current_column)
-		buffer.lines[buffer.current_line] = left .. clipboard .. right
-		buffer.current_column = buffer.current_column + #clipboard
-		buffer:lines_to_content()
+}
+local menu_item_edit_clipboard_copy_cursor = {
+	name = "Copy from cursor",
+	callback = function(item, buf)
+		clipboard = buf.lines[buf.current_line]:sub(buf.current_column)
+		return true
 	end
-end
-local function indent(buffer)
-	buffer.lines[buffer.current_line] = "\t" .. buffer.lines[buffer.current_line]
-	buffer:lines_to_content()
-end
-local function outdent(buffer)
-	buffer.lines[buffer.current_line] = buffer.lines[buffer.current_line]:match("^\t?.*")
-	buffer:lines_to_content()
-end
+}
+local menu_item_edit_clipboard_cut_line = {
+	name = "Cut line",
+	callback = function(item, buf)
+		clipboard = table.remove(buf.lines, buf.current_line)
+		buf:lines_to_content()
+		if clipboard then
+			buf:lines_to_content()
+			buf.current_column = 1
+			buf.modified = true
+			return true
+		end
+	end
+}
+local menu_item_edit_clipboard_paste_line = {
+	name = "Paste line",
+	callback = function(item, buf)
+		if clipboard then
+			table.insert(buf.lines, buf.current_line, clipboard)
+			buf:lines_to_content()
+			buf.current_column = #clipboard+1
+			buf.modified = true
+			return true
+		end
+	end
+}
+local menu_item_edit_clipboard_paste_cursor = {
+	name = "Paste to cursor",
+	callback = function(item, buf)
+		if clipboard then
+			local line = buf.lines[buf.current_line]
+			local left = line:sub(1, buf.current_column-1)
+			local right = line:sub(buf.current_column)
+			buf.lines[buf.current_line] = left .. clipboard .. right
+			buf.current_column = buf.current_column + #clipboard
+			buf:lines_to_content()
+			return true
+		end
+	end
+}
+local menu_item_edit_indent = {
+	name = "Indent",
+	callback = function(item, buf)
+		buf.lines[buf.current_line] = "\t" .. buf.lines[buf.current_line]
+		buf:lines_to_content()
+		return true
+	end
+}
+local menu_item_edit_outdent = {
+	name = "Outdent",
+	callback = function(item, buf)
+		buf.lines[buf.current_line] = buf.lines[buf.current_line]:match("^\t?.*")
+		buf:lines_to_content()
+		return true
+	end
+}
+
+
+local menu_item_buffers_open_file = {
+	name = "Open file",
+	text = "",
+	callback = function(item, buf)
+		if #item.text>0 then
+			buffers.current_buffer = buffers:add_new_file_buffer(item.text)
+			return true
+		end
+	end
+}
+local menu_item_buffers_new_buffer = {
+	name = "New buffer",
+	callback = function(item, buf)
+		buffers.current_buffer = buffers:add_new_buffer()
+		return true
+	end
+}
+local menu_item_buffers_duplicate_buffer = {
+	name = "Duplicate current",
+	callback = function(item, buf)
+		buffers.current_buffer = buffers:add_new_buffer(buf.content)
+		return true
+	end
+}
+local menu_item_buffers_close_others = {
+	name = "Close all except current",
+	callback = function(item, buf)
+		for i=1, #buffers do
+			if buffers[i] ~= buffers.current_buffer then
+				buffers[i]:remove()
+			end
+		end
+		return true
+	end
+}
 
 
 
-
-
--- handle a key from the terminal for the menu
+-- the top-level menu structire
 local top_menu = {
 	{
 		name = "File",
-		children = {},
+		children = {}, -- this menu is stored buffers.current_buffer
 	},
 	{
 		name = "Edit",
 		children = {
-			{ name = "Copy line", callback=function(self, buf)
-				clipboard_copy_line(buf)
-				return true
-			end},
-			{ name = "Copy from cursor", callback=function(self, buf)
-				clipboard_copy_cursor(buf)
-				return true
-			end},
-			{ name = "Paste line", callback=function(self, buf)
-				clipboard_paste_line(buf)
-				return true
-			end},
-			{ name = "Paste to cursor", callback=function(self, buf)
-				clipboard_paste_cursor(buf)
-				return true
-			end},
-			{ name = "Indent" },
-			{ name = "Outdent" },
-		}
+			menu_item_edit_clipboard_copy_line,
+			menu_item_edit_clipboard_copy_cursor,
+			menu_item_edit_clipboard_cut_line,
+			menu_item_edit_clipboard_paste_line,
+			menu_item_edit_clipboard_paste_cursor,
+			menu_item_edit_indent,
+			menu_item_edit_outdent,
+		},
 	},
 	{
 		name = "Buffers",
-		children = {}
-	},
-	{
+		children = {
+			menu_item_buffers_open_file,
+			menu_item_buffers_new_buffer,
+			menu_item_buffers_duplicate_buffer,
+			menu_item_buffers_close_others,
+			{ name = "" }, -- don't remove!
+			update = function(item, buf)
+				local insert_i = #item
+				for i,menu_entry in ipairs(item) do
+					if menu_entry.name=="" then
+						insert_i = i
+					end
+				end
+				for i,buffer in ipairs(buffers) do
+					local disp_name = buffer.name.."(".. i ..")"
+					if buffer == buffers.current_buffer then
+						disp_name = i.."* " .. disp_name
+					else
+						disp_name = i..") " .. disp_name
+					end
+					item[i+insert_i] = {
+						name = disp_name,
+						callback = function(self, buf)
+							buffers.current_buffer = buffer
+							return true
+						end
+					}
+				end
+			end
+		}
+	},{
 		name = "REPL",
 		callback = function()
 			mode = "repl"
@@ -529,96 +699,38 @@ local top_menu = {
 	}
 }
 
-local function generate_buffers_menu()
-	local buffers_menu_list = {}
-	for i,buffer in ipairs(buffers) do
-		local disp_name = buffer.name.."(".. i ..")"
-		if buffer == buffers.current_buffer then
-			disp_name = i.."* " .. disp_name
-		else
-			disp_name = i..") " .. disp_name
-		end
-		table.insert(buffers_menu_list, {
-			name = disp_name,
-			callback = function(self, buf)
-				buffers.current_buffer = buffer
-				return true
-			end
-		})
-	end
-	table.insert(buffers_menu_list, {
-		name = "",
-	})
-	table.insert(buffers_menu_list, {
-		name = "Open file",
-		text = "",
-		callback = function(self, buf)
-			if #self.text>0 then
-				local file_buffer = new_file_buffer(self.text)
-				file_buffer:load() -- load content from disk,
-				file_buffer:content_to_lines() -- convert content to lines
-				table.insert(buffers, file_buffer)
-				buffers.current_buffer = file_buffer -- change visible buffer to current
-				return true
-			end
-		end
-	})
-	table.insert(buffers_menu_list, {
-		name = "New buffer",
-		callback = function(self, buf)
-			local buffer = new_buffer() -- create a new buffer
-			table.insert(buffers, buffer) -- add to list of available buffer
-			buffers.current_buffer = buffer -- change visible buffer to current
-			return true
-		end
-	})
-	table.insert(buffers_menu_list, {
-		name = "Lua buffer",
-		callback = function(self, buf)
-			local buffer = new_buffer() -- create a new buffer
-			table.insert(buffers, buffer) -- add to list of available buffer
-			buffers.current_buffer = buffer -- change visible buffer to current
-			return true
-		end
-	})
-	table.insert(buffers_menu_list, {
-		name = "Duplicate current",
-		callback = function(self, buf)
-			local buffer = new_buffer() -- create a new buffer
-			buffer.content = buf.content -- copy content string
-			buffer:content_to_lines() -- convert content to lines for render
-			table.insert(buffers, buffer) -- add to list of available buffer
-			buffers.current_buffer = buffer -- change visible buffer to current
-			return true
-		end
-	})
-	table.insert(buffers_menu_list, {
-		name = "Close all except current",
-		callback = function(self, buf)
-			for i=1, #buffers do
-				if buffers[i] ~= buffers.current_buffer then
-					buffers[i]:remove()
-				end
-			end
-			buffers.current_buffer = buffer -- change visible buffer to current
-			return true
-		end
-	})
-	return buffers_menu_list
-end
+
+
 
 local cmenu
 local selected
 local top_selected
 local top_focus
-local function menu_enter()
+local function top_menu_enter()
 	mode = "menu"
 	top_selected = 1
 	top_focus = true
 	cmenu = nil -- top_menu[top_selected].children
 	selected = 1
 	top_menu[1].children = buffers.current_buffer.file_menu
-	top_menu[3].children = generate_buffers_menu()
+	top_menu[3].children:update()
+end
+local function sub_menu_exit()
+	cmenu = nil
+	top_focus = true
+end
+local function sub_menu_enter(submenu)
+	submenu.parent = cmenu
+	cmenu = submenu
+	selected = 1
+end
+local function sub_menu_up()
+	if cmenu.parent then
+		error("TODO") -- TODO
+		cmenu = cmenu.parent
+	else
+		sub_menu_exit()
+	end
 end
 
 local function menu_handle_key(key_code, key_resolved)
@@ -627,8 +739,8 @@ local function menu_handle_key(key_code, key_resolved)
 	end
 	if key_resolved == "escape" then
 		if cmenu then
-			cmenu = nil
-			top_focus = true
+			sub_menu_up()
+			return
 		else
 			mode = "editor"
 		end
@@ -665,10 +777,8 @@ local function menu_handle_key(key_code, key_resolved)
 					mode = new_mode
 				end
 			elseif item.children then
-				item.children.parent = cmenu
-				cmenu = item.children
 				top_focus = false
-				selected = 1
+				sub_menu_enter(item.children)
 			end
 		else
 			local item = top_menu[top_selected]
@@ -685,7 +795,7 @@ local function menu_handle_key(key_code, key_resolved)
 			item.text = item.text:sub(1, -2)
 		end
 	end
-	if (not key_resolved) and key_code then
+	if cmenu and (not key_resolved) and key_code then
 		local char = string.char(key_code)
 		local item = cmenu[selected]
 		if item.text and char:match("%C") then
@@ -703,12 +813,13 @@ local function menu_draw()
 	for i,menu_item in ipairs(top_menu) do
 		w("\027[44m")
 		if (i == top_selected) and top_focus then
-			w("\027[43m", menu_item.name, "\027[44m")
+			w("\027[47m\027[34m ", menu_item.name, " \027[0m\027[44m")
 		else
-			w(menu_item.name)
+			w(" ", menu_item.name, " ")
 		end
 		if i ~= #top_menu then
-			w(" | ")
+			--w(" | ")
+			w("  ")
 		end
 	end
 	w("\n\027[0m")
@@ -744,7 +855,7 @@ end
 -- handle a resolved key sequence from the terminal for the editor
 local function editor_handle_resolved(buffer, key_resolved)
 	if key_resolved == "escape" then
-		menu_enter()
+		top_menu_enter()
 	end
 	local modify_cursor = false
 	if buffer.current_line then
@@ -829,10 +940,6 @@ local function editor_handle_resolved(buffer, key_resolved)
 			buffer:lines_to_content()
 			buffer.modified = true
 			buffer.current_column = buffer.current_column + 1
-		elseif key_resolved == "ctrl-k" then
-			clipboard_cut_line(buffer)
-		elseif key_resolved == "ctrl-u" then
-			clipboard_paste_line(buffer)
 		end
 		if modify_cursor then
 			buffer.current_line = math.max(math.min(buffer.current_line, #buffer.lines), 1)
@@ -860,124 +967,6 @@ local function editor_handle_key(buffer, key_code, key_resolved)
 	end
 end
 
-
--- create a new file buffer, load content from file, and append to buffer list
-local function add_file_buffer(filepath)
-	-- add a buffer that also can save/load from a file
-	local file_buffer = new_file_buffer(filepath)
-
-	file_buffer:load() -- load content from disk,
-	file_buffer:content_to_lines() -- convert content to lines
-	table.insert(buffers, file_buffer)
-	if not buffers.current_buffer then
-		buffers.current_buffer = file_buffer
-	end
-
-	return file_buffer, #buffers
-end
-
-
-local function primitive_repl()
-	w(alternate_off)
-
-	local repl_line = ""
-	local cursor_x = 1
-	local output_history = {}
-	local input_history = {}
-	local run = true
-	local input_history_index
-	local repl_env = {
-		string = string, io = io, package = package, os = os, math = math,
-		debug = debug,
-		xpcall = xpcall, tostring = tostring, print = print, unpack = unpack,
-		require = require, getfenv = getfenv, setmetatable = setmetatable,
-		next = next, assert = assert, tonumber = tonumber, rawequal = rawequal,
-		collectgarbage = collectgarbage, getmetatable = getmetatable,
-		module = module, rawset = rawset, pcall = pcall, table = table,
-		newproxy = newproxy, type = type, coroutine = coroutine, select = select,
-		gcinfo = gcinfo, pairs = pairs, rawget = rawget, loadstring = loadstring,
-		ipairs = ipairs, _VERSION = _VERSION, dofile = dofile, setfenv = setfenv,
-		load = load, error = error, loadfile = loadfile,
-
-		buffers = buffers,
-		output_history = output_history,
-		input_history = input_history,
-	}
-	local function output_str(str)
-		local lines = split_by_pattern(str, "\n")
-		for _,line in ipairs(lines) do
-			table.insert(output_history, line)
-		end
-	end
-	repl_env.print = function(...)
-		local str = {}
-		for _,v in pairs({...}) do
-			table.insert(str, tostring(v))
-		end
-		output_str(table.concat(str, " "))
-	end
-	local function handle_repl_line()
-		if trim(repl_line):sub(1,1)=="$" then
-			local p = io.popen(repl_line, "r")
-			if p then
-				output_str(p:read("*a"))
-				p:close()
-			end
-			return
-		elseif trim(repl_line):sub(-1) == "\\" then
-			repl_line = repl_line .. "\n"
-			return
-		elseif trim(repl_line) == "exit" then
-			run = false
-		else
-			local f,err = loadstring(repl_line)
-			setfenv(f, repl_env)
-			if f then
-				local ok,ret = pcall(f)
-				if ok and ret then
-					output_str(tostring(ret))
-				elseif not ok then
-					output_str("Error:" .. tostring(ret))
-				end
-			else
-				output_str("Error:" .. tostring(err))
-			end
-		end
-	end
-	while run do
-		local key_code, key_resolved = getch.get_mbs(getch.blocking, get_key_table())
-		local char = string.char(key_code)
-		if key_resolved == "escape" then
-			run = false
-		elseif key_resolved == "enter" then
-			handle_repl_line()
-		elseif key_resolved == "left" then
-			cursor_x = math.max(cursor_x-1 ,1)
-		elseif key_resolved == "right" then
-			cursor_x = math.min(cursor_x+1 ,#repl_line+1)
-		elseif key_resolved == "up" then
-			if input_history_index then
-				input_history_index = math.max(input_history_index - 1, 1)
-			else
-				input_history_index = #input_history
-			end
-		elseif key_resolved == "down" then
-			if input_history_index then
-				input_history_index = math.min(input_history_index + 1, #input_history+1)
-				if not input_history[input_history_index] then
-					input_history_index = nil
-				end
-			end
-		elseif (not key_resolved) and char:match("%C") then
-			local left = repl_line:sub(1, cursor_x)
-			local right = repl_line:sub(cursor_x+1)
-			repl_line = left .. char .. right
-		end
-	end
-
-	w(alternate_on)
-end
-
 local repl_output_history = {}
 local repl_input_history = {}
 local repl_input_history_i = 1
@@ -994,7 +983,6 @@ local function repl_handle_key(key_code, key_resolved)
 		for k,v in pairs(getfenv()) do
 			env[k] = v
 		end
-		env.add_file_buffer = add_file_buffer
 		env.buffers = buffers
 
 		function env.print(...)
@@ -1008,11 +996,8 @@ local function repl_handle_key(key_code, key_resolved)
 			repl_output_history = {}
 		end
 
-		if (repl_line == "editor") or (repl_line == "exit") then
+		if repl_line == "exit" then
 			mode = "editor"
-			return
-		elseif repl_line == "menu" then
-			menu_enter()
 			return
 		elseif repl_line == "_menu" then
 			mode = "menu"
@@ -1085,7 +1070,7 @@ local function main()
 	-- parse arguments(load files)
 	for _,arg_str in ipairs(arg) do
 		if file_exists(arg_str) then
-			add_file_buffer(arg_str)
+			buffers:add_file_buffer(arg_str)
 		else
 			print("Can't open file:", arg_str)
 			os.exit(1)
@@ -1093,15 +1078,16 @@ local function main()
 	end
 	-- TODO: create new buffer?
 	if #buffers == 0 then
-		print("Must open an existing file!")
-		os.exit(1)
+		buffers:add_new_buffer()
 	end
+	buffers.current_buffer = assert(buffers[1])
 
 	-- Enable alternative screen buffer
 	w(alternate_on)
 
 	while run do
 		local buffer = buffers.current_buffer
+		if not buffer then break end
 		if mode == "editor" then
 			buffer.current_line = buffer.current_line or 1
 			buffer.current_column = buffer.current_column or 1
