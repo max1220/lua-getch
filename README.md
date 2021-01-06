@@ -24,14 +24,23 @@ Install in Debian/Ubuntu:
 
 # Build
 
+By default, the modules builds for Lua5.1. To start the build, just run:
+
     make
 
 The build module is getch.so. Install by running
 
-	make install
+	sudo make install
 
 This will install the C module `getch.so` to `/usr/local/lib/lua/5.1/`, and
 the Lua module from `lua/` to `/usr/local/share/lua/5.1/lua-getch/`.
+
+You can compile and install for another version by specifying parameters make:
+
+    make clean
+    make LUA_INCDIR=/usr/include/lua5.3 LUA_LIBS=-llua5.1 all
+    sudo make INSTALL_PATH=/usr/local/share/lua/5.3 INSTALL_CPATH=/usr/local/lib/lua/5.3 install
+
 
 
 # Example 'simple.lua'
