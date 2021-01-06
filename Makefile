@@ -5,10 +5,9 @@
 # lua5.1 is ABI-Compatible with luajit.
 PREFIX ?= /usr/local
 LUA_INCDIR ?= /usr/include/lua5.1
-LUA_LIBDIR ?= lua5.1
+LUA_LIBS ?= -llua5.1
 
 CFLAGS ?= -O3 -Wall -Wextra -Wpedantic -I${LUA_INCDIR}
-LUA_LIBS ?= -l${LUA_LIBDIR}
 STRIP_FLAGS=
 
 # Target directories for 'make install':
@@ -23,9 +22,11 @@ INSTALL_PATH = $(PREFIX)/share/lua/5.1
 INSTALL_CPATH = $(PREFIX)/lib/lua/5.1
 
 # name for the lua module(used in require() to load Lua module that loads the C module)
+# Usually no need to touch this(breaks compabillity when loading)
 INSTALL_LUALIBNAME = lua-getch
 
 # filename for the compiled getch.so in the cpath. Changing this also requires changing the require("getch") accordingly.
+# Usually no need to touch this(breaks internal Lua code compabillity)
 INSTALL_CLIBNAME = getch
 
 
