@@ -1,29 +1,33 @@
 #!/bin/bash
 
-# Allow for overriding of lua location from the make command-line.
-LUA_INC=/usr/include/lua5.1
-LUA_LIB=lua5.1
+# Adjust to your needs.
+# should work with Lua versions 5.1, 5.2, 5.3.
+# lua5.1 is ABI-Compatible with luajit.
+PREFIX ?= /usr/local
+LUA_INCDIR ?= /usr/include/lua5.1
+LUA_LIBDIR ?= lua5.1
 
-# Adjust to your needs. lua5.1 is ABI-Compatible with luajit.
-CFLAGS=-O3 -Wall -Wextra -I${LUA_INC}
-LIBS=-l${LUA_LIB}
+CFLAGS ?= -O3 -Wall -Wextra -Wpedantic -I${LUA_INCDIR}
+LUA_LIBS ?= -l${LUA_LIBDIR}
 STRIP_FLAGS=
 
 # Target directories for 'make install':
-
-# name for the lua module(used in require() to load Lua module that loads the C module)
-INSTALL_LUALIBNAME=lua-getch
-
-# filename for the compiled getch.so in the cpath. Changing this also requires changing the require("getch") accordingly.
-INSTALL_CLIBNAME=getch
+# Adjust to your needs.
 
 # Installation path for the Lua modules. Will be installed to a subdirectory $INSTALL_LIBNAME in this directory.
 # To list the default package.path for your Lua installation, you could use: lua -e "print((package.path:gsub(';', '\n')))"
-INSTALL_PATH=/usr/local/share/lua/5.1
+INSTALL_PATH = $(PREFIX)/share/lua/5.1
 
 # Installation path for the C module. A single .so file named getch.so will be installed here
 # To list the default package.cpath for your Lua installation, you could use: lua -e "print((package.cpath:gsub(';', '\n')))"
-INSTALL_CPATH=/usr/local/lib/lua/5.1
+INSTALL_CPATH = $(PREFIX)/lib/lua/5.1
+
+# name for the lua module(used in require() to load Lua module that loads the C module)
+INSTALL_LUALIBNAME = lua-getch
+
+# filename for the compiled getch.so in the cpath. Changing this also requires changing the require("getch") accordingly.
+INSTALL_CLIBNAME = getch
+
 
 
 
@@ -38,7 +42,7 @@ ifeq ($(UNAME_S),Darwin)
 endif
 
 getch.so: getch.c
-	$(CC) -o $@ $(CFLAGS) $(LIBS) $<
+	$(CC) -o $@ $(CFLAGS) $(LUA_LIBS) $<
 	strip ${STRIP_FLAGS} $@
 
 .PHONY: all
