@@ -1,9 +1,11 @@
 # lua-getch
 
-Provides a getch function for Lua that allows getting Keyboard codes unbuffered, optionally non-blocking.
+Provides a getch function for Lua that allows getting Keyboard codes
+unbuffered, optionally non-blocking from stdin.
+
 This allows, for example, the creation of Terminal GUI's.
 
-Provides utillity function for decoding multi-byte sequences.
+Provides utility function for decoding multi-byte sequences.
 This approximates ncurses' `keypad(win, TRUE)` mode but without requiring a dependency on ncurses.
 
 
@@ -12,7 +14,7 @@ This approximates ncurses' `keypad(win, TRUE)` mode but without requiring a depe
 
 To build this Module you need:
 
- * Lua 5.1 + headers
+ * Lua + headers
 
 Install in Debian/Ubuntu:
 
@@ -79,13 +81,17 @@ You can also only load the `getch.get_mbs` function using require("lua-getch.get
 Gets a single character, blocking(waits for a character). `ch` is a character code as defined by the terminal,
 and is returned as a number.
 Note that a character code might be part of an escape sequence send by the terminal.
+Returns nil on EOF.
 
 
 
-## `ch = getch.non_blocking()`
+## `ch,err = getch.non_blocking(timeout)`
 
 Gets a single character, non-blocking(check for a character).
 Returns nil if no character is available, the character code otherwise(see above).
+If optional argument timeout is specified, wait up to timeout seconds for input.
+If ch is nil, err is the error code(EOF etc.)
+
 
 
 
