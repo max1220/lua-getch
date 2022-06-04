@@ -155,7 +155,6 @@ static int l_select(lua_State *L) {
 	FD_ZERO(&write_fds);
 
 	int arg_count = lua_gettop(L);
-	printf("arg_count: %d\n", arg_count);
 
 	// return if no fds are specified
 	if (arg_count<2) {
