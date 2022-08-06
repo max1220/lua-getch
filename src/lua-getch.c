@@ -1,10 +1,12 @@
-#include <sys/select.h>
-#include <fcntl.h>
-#include <string.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/select.h>
 #include <termios.h>
 #include <unistd.h>
+
+
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
@@ -334,6 +336,15 @@ int luaopen_getch(lua_State *L) {
 	LUA_T_PUSH_FLAG(PENDIN)
 	LUA_T_PUSH_FLAG(IEXTEN)
 	lua_settable(L, -3);
+
+	// add lflags table
+	lua_pushstring(L, "optional_actions");
+	lua_newtable(L);
+	LUA_T_PUSH_FLAG(TCSANOW)
+	LUA_T_PUSH_FLAG(TCSADRAIN)
+	LUA_T_PUSH_FLAG(TCSAFLUSH)
+	lua_settable(L, -3);
+
 
 	return 1;
 }
