@@ -1,8 +1,8 @@
 package = "lua-getch"
-version = "0.0-1"
+version = "scm-1"
 source = {
 	url = "git://github.com/max1220/lua-getch",
-	tag = "0.0-1"
+	branch = "master"
 }
 description = {
 	summary = "Simple implementation of an (optionally non-blocking) getch implementation",
