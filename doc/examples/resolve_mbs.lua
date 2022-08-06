@@ -3,7 +3,7 @@ local getch = require("lua-getch")
 
 print("Press q to quit.")
 local run = true
-while true do
+while run do
 	-- try to get a key, automatically resolve multi-byte sequences
 	local resolved, seq = getch.get_key_mbs(getch.get_char_cooked, getch.key_table)
 
@@ -14,12 +14,12 @@ while true do
 
 	-- seq contains every key that was detected, in sequence or not
 	print("key sequence:", #seq)
-	for k,v in ipairs(seq) do
+	for _,v in ipairs(seq) do
 		print("  key:", v)
 
 		-- quit on q key
-		if (char==("q"):byte()) or (char==("Q"):byte()) then
-			break
+		if string.char(v) == "q" then
+			run = false
 		end
 	end
 end

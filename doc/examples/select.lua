@@ -1,7 +1,7 @@
 #!/usr/bin/env lua5.1
 local getch = require("lua-getch")
 
--- enable raw mode to read single characters immediatly
+-- enable raw mode to read single characters immediately
 getch.set_raw_mode(io.stdin)
 
 -- call select with stdin as read_fd, so that when stdin becomes
@@ -15,8 +15,10 @@ if stdin_ready then
 	-- this should not block, because a character is ready now.
 	local pressed_key = getch.get_char(io.stdin)
 	print("Key pressed! Key was:", pressed_key)
-else
+elseif ok then
 	print("Timeout! No key was pressed within the timeout!")
+else
+	print("An error occured!")
 end
 
 -- restore old terminal mode
