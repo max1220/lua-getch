@@ -1,6 +1,6 @@
 --[[
 this file produces the actual module for lua-getch, combining the
-C functionallity with the lua functionallity. You can use the C module
+C functionality with the Lua functionality. You can use the C module
 directly by requiring getch directly.
 --]]
 
@@ -12,22 +12,32 @@ local bit = require("bit32")
 
 
 -- enter non-canonical mode and disable echo("raw mode")
-local iflags, oflags, cflags, lflags, restore_fd
-function getch.set_raw_mode(fd)
-	if iflags then
+local lflags, restore_fd, is_nb
+function getch.set_raw_mode(fd, non_blocking)
+	if lflags then
 		-- already in raw mode
 		return
 	end
 
 	-- store previous terminal attributes
-	iflags, oflags, cflags, lflags = getch.get_termios_attributes(fd)
+	local _, _, _, old_lflags = getch.get_termios_attributes(fd)
+	lflags = old_lflags
 	restore_fd = fd
 
 	-- remove ICANON and ECHO from lflags
-	local new_lflags = bit.band(lflags, bit.bnot(getch.lflags.ICANON + getch.lflags.ECHO))
+	local new_lflags = bit.band(old_lflags, bit.bnot(getch.lflags.ICANON + getch.lflags.ECHO))
 
 	-- set the new flags
 	assert(getch.set_termios_attributes(fd, nil, nil, nil, new_lflags))
+
+	-- enable non-blocking mode if requested
+	if non_blocking then
+		is_nb = nonblocking
+		getch.set_nonblocking(fd, true)
+	end
+
+	-- indicate success
+	return true
 end
 
 -- restore the terminal attributes after entering raw mode
@@ -39,7 +49,15 @@ function getch.restore_mode()
 
 	-- restore previous terminal attributes
 	assert(getch.set_termios_attributes(restore_fd, nil, nil, nil, lflags))
-	iflags, oflags, cflags, lflags = nil,nil,nil,nil
+	lflags = nil
+
+	-- disable non-blocking mode if it was enabled
+	if is_nb then
+		getch.set_nonblocking(restore_fd, true)
+	end
+
+	-- indicate success
+	return true
 end
 
 -- read a single character
@@ -52,16 +70,30 @@ function getch.get_char(fd)
 	end
 end
 
+-- read a single character from stdin
+function getch.get_char_stdin()
+	return getch.get_char(io.stdin)
+end
+
 -- disable buffering, enter raw mode and, get a char, then restore terminal
-function getch.get_char_cooked()
+function getch.get_char_cooked(timeout)
 	-- disable buffering through libc
 	io.stdin:setvbuf("no")
 
 	-- set raw(non-linebuffered) mode, disable automatic echo of characters
 	getch.set_raw_mode(io.stdin)
 
+	-- optionally wait up to timeout seconds for stdin to become ready.
+	-- If timeout is reached, nil is returned.
+	if timeout then
+		local ok, stdin_ready = getch.select(timeout, io.stdin)
+		if ok and (not stdin_ready) then
+			return
+		end
+	end
+
 	-- get the character
-	local char = getch.get_char(io.stdin)
+	local char = getch.get_char_stdin()
 
 	-- leave raw mode
 	getch.restore_mode()
@@ -83,10 +115,10 @@ end
 -- key that was read.
 function getch.get_key_mbs(get_key, key_table, max_depth, seq)
 	-- maximum length of the escape sequence
-	local max_depth = max_depth or 32
+	max_depth = max_depth or 32
 
 	-- the sequence of keys already in this sequence
-	local seq = seq or {}
+	seq = seq or {}
 
 	-- get a keycode
 	local key_code = get_key()
