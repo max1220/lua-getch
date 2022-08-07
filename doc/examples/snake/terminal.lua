@@ -1,4 +1,5 @@
 local getch = require("lua-getch")
+--luacheck: ignore self
 
 -- Utillities for handling terminal input/output
 local term = {}
