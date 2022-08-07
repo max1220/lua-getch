@@ -190,14 +190,6 @@ function scene:get_board_position_cell_size()
 	-- center board on terminal
 	local board_center_x, board_center_y = term:get_center_rect_position(board_w, board_h)
 
-	print("cell_size:", cell_size)
-	print("cell_w:", cell_w)
-	print("cell_h:", cell_h)
-	print("board_w:", board_w)
-	print("board_h:", board_h)
-
-	--os.exit()
-
 	return board_center_x, board_center_y+1, cell_w, cell_h
 end
 
