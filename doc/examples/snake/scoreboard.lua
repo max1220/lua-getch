@@ -3,6 +3,14 @@
 -- adding a single scoreboard entry, and storing the list in a file.
 local scores = {}
 
+-- ranking of difficulties
+local difficulties = {
+	hard = 1,
+	medium = 2,
+	easy = 3,
+	custom = 4
+}
+
 -- add a highscore to the list of highscores
 function scores:add(score, name, difficulty)
 	-- insert the scoreboard entry
@@ -16,10 +24,13 @@ function scores:add(score, name, difficulty)
 
 	-- sort the scoreboard
 	table.sort(self, function(a,b)
-		if a.score == b.score then
-			return a.time>b.time
+		if a.difficulty == b.difficulty then
+			if a.score == b.score then
+				return a.time>b.time
+			end
+			return a.score>b.score
 		end
-		return a.score>b.score
+		return difficulties[a.difficulty]<difficulties[b.difficulty]
 	end)
 
 	-- get the position of the added entry
