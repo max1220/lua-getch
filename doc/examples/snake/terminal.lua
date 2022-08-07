@@ -120,7 +120,7 @@ end
 function term:read_line()
 	local line = ""
 	repeat
-		local key,seq,char = self:read_key()
+		local key,_,char = self:read_key()
 		if key == "backspace" then
 			line = line:sub(1, -2)
 			self.write("\008 \008")

@@ -32,7 +32,7 @@ function getch.set_raw_mode(fd, non_blocking)
 
 	-- enable non-blocking mode if requested
 	if non_blocking then
-		is_nb = nonblocking
+		is_nb = non_blocking
 		getch.set_nonblocking(fd, true)
 	end
 

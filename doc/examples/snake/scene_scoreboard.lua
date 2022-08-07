@@ -1,6 +1,8 @@
 local scene_utils = require("scene_utils")
 local scores = require("scoreboard")
 local term = require("terminal")
+--luacheck: ignore self
+
 
 -- The highscore scene.
 -- Displays the score at the point the game ended,

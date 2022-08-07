@@ -27,6 +27,8 @@ scene.title_text = {
 }
 
 function scene:input()
+	local center_x = term:get_center_rect_position(#self.title_text[1])
+
 	-- read a key from the user
 	local _,_,_, combined = term:read_key(1)
 	if (combined == "escape") or (combined == "q") then
@@ -41,25 +43,39 @@ function scene:input()
 		elseif self.selected == 3 then
 			scene_utils:change_scene("scene_snake", 10,10, 1, 0.8)
 		elseif self.selected == 4 then
-			local settings_ok = scene_utils:change_scene("scene_snake", self.custom_width, self.custom_height, self.custom_max_points, self.custom_difficulty_factor)
+			local settings_ok = scene_utils:change_scene(
+				"scene_snake",
+				self.custom_width, self.custom_height,
+				self.custom_max_points,
+				self.custom_difficulty_factor
+			)
 			if not settings_ok then
-				scene_utils:change_scene("scene_snake", self.custom_width, self.custom_height, self.custom_max_points, self.custom_difficulty_factor)
+				scene_utils:change_scene(
+					"scene_snake",
+					self.custom_width, self.custom_height,
+					self.custom_max_points,
+					self.custom_difficulty_factor
+				)
 			end
 		elseif self.selected == 5 then
 			term.write(term:esc_pos(center_x, self.selected+#self.title_text).."     "); term.flush()
 			term.write("Enter new width:        ")
+			term.flush()
 			self.custom_width = math.floor(tonumber(term:read_line()) or self.custom_width)
 		elseif self.selected == 6 then
 			term.write(term:esc_pos(center_x, self.selected+#self.title_text).."     "); term.flush()
 			term.write("Enter new height:       ")
+			term.flush()
 			self.custom_height = math.floor(tonumber(term:read_line()) or self.custom_height)
 		elseif self.selected == 7 then
 			term.write(term:esc_pos(center_x, self.selected+#self.title_text).."     "); term.flush()
 			term.write("Enter new maximum amount of points on screen:")
+			term.flush()
 			self.custom_max_points = tonumber(term:read_line()) or self.custom_max_points
 		elseif self.selected == 8 then
 			term.write(term:esc_pos(center_x, self.selected+#self.title_text).."     "); term.flush()
 			term.write("Enter new difficulty factor(0-1):")
+			term.flush()
 			self.custom_difficulty_factor = tonumber(term:read_line()) or self.custom_difficulty_factor
 		end
 	elseif (combined=="up") then

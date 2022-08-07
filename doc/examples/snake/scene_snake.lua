@@ -26,7 +26,7 @@ function scene:input()
 	elseif (combined=="q") or (combined=="escape") then
 		-- exit the game
 		scene_utils:change_scene()
-	elseif (combined=="p") then
+	--elseif (combined=="p") then
 		-- pause game(currently unimplemented)
 	elseif (combined=="d") then
 		-- toggle debug view
@@ -153,7 +153,7 @@ function scene:on_update()
 	self:output()
 
 	-- check input
-	local did_input = self:input()
+	self:input()
 
 	-- update the game state
 	self.game:update()
