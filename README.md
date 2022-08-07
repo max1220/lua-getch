@@ -18,11 +18,10 @@ some keypresses, among other things(this approximates ncurses
 
 # Installation
 
+See [doc/INSTALLATION.md](doc/INSTALLATION.md)
+
 This library is packaged and build using Luarocks, which makes building
 and installing easy.
-
-Currently this library is not published on a luarocks server,
-so you need to clone this repository and build it yourself:
 
 ```
 git clone https://github.com/max1220/lua-getch
@@ -30,8 +29,6 @@ cd lua-getch
 # install locally, usually to ~/.luarocks
 luarocks make --local
 ```
-
-This will install the module locally, typically in ~/.luarocks.
 
 When installing locally you need to tell Lua where to look for modules
 installed using Luarocks, e.g.:
@@ -46,8 +43,9 @@ luarocks path >> ~/.bashrc
 
 # Usage
 
-There is detailed usage information in the documentation(`doc/USAGE.md`).
-There are some examples, including a simple snake game in `doc/examples/`.
+There is detailed usage information in the documentation([doc/USAGE.md](doc/USAGE.md)).
+
+There are some examples, including a simple snake game in [doc/examples](doc/examples).
 
 A basic usage example:
 
