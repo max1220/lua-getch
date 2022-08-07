@@ -160,7 +160,7 @@ function scene:on_update()
 
 	-- check if the game is over
 	if self.game.gameover then
-		scene_utils:change_scene("scene_highscore", self.game)
+		scene_utils:change_scene("scene_scoreboard", self.game)
 	end
 end
 

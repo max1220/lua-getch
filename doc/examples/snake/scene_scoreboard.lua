@@ -33,19 +33,19 @@ function scene:submit_highscore()
 	local difficulty_str = "custom"
 	local d = self.game.difficulty_factor
 	local m = self.game.max_points_on_board
-	if (self.game.width ~= 10) or (self.game.height ~= 10) then
+	if (self.game.board_w ~= 10) or (self.game.board_h ~= 10) then
 		-- irregular dimensions, so also custom
 		difficulty_str = "custom"
 	elseif (d == 0.2) and (m==3) then
 		difficulty_str = "easy"
-	elseif d == 0.5 and (m==2) then
+	elseif (d == 0.5) and (m==2) then
 		difficulty_str = "medium"
-	elseif d == 0.8 and (m==2) then
+	elseif (d == 0.8) and (m==1) then
 		difficulty_str = "hard"
 	end
 
 	if self.name and (not self.game.highscore_pos) then
-		self.game.highscore_pos = scores:add(self.game.score, self.name, tostring(self.game.difficulty_factor))
+		self.game.highscore_pos = scores:add(self.game.score, self.name, difficulty_str)
 		scores:save_to_file(self.highscore_filename)
 	end
 end
