@@ -63,3 +63,17 @@ while true do
 	end
 end
 ```
+
+
+
+
+
+# Intended use
+
+This library is written by me, max1220, for the sole purpose of having
+fun with Lua, learning, and enabling me to create more complex projects.
+
+No gurantees, of any kind(functionallity, long-term stabillity,
+long-term maintenance etc.).
+
+That beeing said, this library is quite simple, and somewhat tested.
