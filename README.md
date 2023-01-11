@@ -23,6 +23,18 @@ See [doc/INSTALLATION.md](doc/INSTALLATION.md)
 This library is packaged and build using Luarocks, which makes building
 and installing easy.
 
+You can download a release from the official luarocks.org repository using:
+
+```
+luarocks install lua-getch
+# alternatively:
+luarocks install --server=https://luarocks.org/manifests/max1220 lua-getch
+```
+
+You can run this command as root to install system-wide.
+
+Or you can build a version from the Git repository:
+
 ```
 git clone https://github.com/max1220/lua-getch
 cd lua-getch
@@ -30,13 +42,13 @@ cd lua-getch
 luarocks make --local
 ```
 
-When installing locally you need to tell Lua where to look for modules
-installed using Luarocks, e.g.:
+When installing locally, or as non-root user you need to tell Lua where to
+look for modules installed using Luarocks using the LUA_PATH environmente variable.
+Luarocks can generate this variable:
 
 ```
 luarocks path >> ~/.bashrc
 ```
-
 
 
 
