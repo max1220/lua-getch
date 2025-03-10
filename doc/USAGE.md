@@ -12,7 +12,9 @@ and extends the table returned by the C module with some Lua functions.
 
 
 
-# getch.get_termios_attributes(fd)
+# provided by C library
+
+## getch.get_termios_attributes(fd)
 
 `iflags,oflags,cflags,lflags = getch.get_termios_attributes(fd)`
 
@@ -26,9 +28,7 @@ Return values are termios flags, nil otherwise. See `man 3 termios`
 
 
 
-
-
-# getch.set_termios_attributes(fd, iflags,oflags,cflags,lflags, optional_actions)
+## getch.set_termios_attributes(fd, iflags,oflags,cflags,lflags, optional_actions)
 
 `ok = getch.set_termios_attributes(fd, iflags,oflags,cflags,lflags)`
 
@@ -45,17 +45,14 @@ Return value `ok` is true if successful, false otherwise
 
 
 
+## Constants
 
-
-# Constants
-
-These constants are provided by the C module as well.
 Please see the termios documentation for details on what they do.
 Lua flag names are lower-cased. (See `man 3 termios`)
 
 
 
-## getch.iflags
+### getch.iflags
 
 Input flag constants from termios. See `man 3 termios`.
 
@@ -65,7 +62,7 @@ ignbrk, brkint, ignpar, parmrk, inpck, istrip, inlcr, igncr, icrnl, iuclc, ixon,
 
 
 
-## getch.oflags
+### getch.oflags
 
 Output flag constants from termios. See `man 3 termios`.
 
@@ -75,7 +72,7 @@ opost, olcuc, onlcr, ocrnl, onocr, onlret, ofill, ofdel, nldly, crdly, tabdly, b
 
 
 
-## getch.cflags
+### getch.cflags
 
 Control flag constants from termios. See `man 3 termios`.
 
@@ -85,7 +82,7 @@ cbaud, cbaudex, csize, cstopb, cread, parenb, parodd, hupcl, clocal, cibaud, cms
 
 
 
-## getch.lflags
+### getch.lflags
 
 Local flag constants from termios. See `man 3 termios`.
 
@@ -95,7 +92,7 @@ isig, icanon, xcase, echo, echoe, echok, echonl, echoctl, echoprt, echoke, flush
 
 
 
-## getch.optional_actions
+### getch.optional_actions
 
 Optional actions constants to perform on set_termios_attributes.
 
@@ -105,9 +102,7 @@ tcsanow, tcsadrain, tcsaflush
 
 
 
-
-
-# getch.set_nonblocking(fd, non_blocking)
+## getch.set_nonblocking(fd, non_blocking)
 
 `ok = getch.set_nonblocking(fd, non_blocking)`
 
@@ -121,21 +116,31 @@ Return value `ok` is true if successful, nil otherwise.
 
 
 
+# getch.select(timeout, write1, fd1, write2, fd2, ...)
 
-
-# getch.select(timeout, read_fd1, read_fd2, ..., nil, write_fd1, write_fd2, ...)
-
-`ok, read_fd1, read_fd2, ..., nil, write_fd1, write_fd2 = getch.select(timeout, read_fd1, read_fd2, ..., nil, write_fd1, write_fd2, ...)`
+`select_ret, ready_fd1, ready_fd2, ... = getch.select(timeout, write1, fd1, write2, fd2, ...)`
 
 Wait until the specified file descriptors become available for
 reading/writing, or the timeout(if any) has elapsed.
 This is a partial binding for the `select`(`man 2 select`) function.
 
-`timeout` is the timeout in seconds, or nil to wait indefinitly.
-All other arguments are expected to be file descriptors(numbers or file userdata).
-All file descriptors are added to the read file descriptor list, until
-the first nil in the argument, then they are treated as write file descriptors.
+`timeout` is the timeout in seconds, or nil to wait indefinitely.
 
+All other arguments define which file descriptors are checked for what access.
+a boolean value(the write flag) is followed by a file descriptor(number or Lua file userdata).
+If the write flag is enabled the file descriptor is added to the list of file
+descriptors to check for write access, otherwise it is added to the list for read access.
+
+The first return value(`select_ret`) is the return value from select(the number of file descriptors that became ready)
+
+All other return values are boolean values, and are ordered the same as the
+arguments to this function.
+
+
+
+
+
+# Functions provided by Lua wrapper library
 
 The following Lua functions are added to the table returned by the C module
 (the table returned by `require("getch")`) when the module is loaded as
@@ -149,9 +154,9 @@ The file descriptors are always returned in the same argument position.
 
 
 
-# getch:set_raw_mode(fd, non_blocking)
+# lua_getch:set_raw_mode(fd, non_blocking)
 
-`ok = getch:set_raw_mode(fd)`
+`ok = lua_getch:set_raw_mode(fd)`
 
 This enables the non-canonical bit to enable character-based input, and
 disables local echo. Optionally enables non-blocking mode.
@@ -165,18 +170,18 @@ Return value `ok` is true if successful, nil otherwise.
 
 
 
-# getch:restore_mode()
+# lua_getch:restore_mode()
 
-Restores the "regular" terminal mode after using `getch:set_raw_mode()`.
-`getch.set_raw_mode()` needs to be called before this function.
-
-
+Restores the "regular" terminal mode after using `lua_getch:set_raw_mode()`.
+`lua_getch.set_raw_mode()` needs to be called before this function.
 
 
 
-# getch:get_char(fd)
 
-`char = getch:get_char(fd)`
+
+# lua_getch:get_char(fd)
+
+`char = lua_getch:get_char(fd)`
 
 Get a single character from the specified file descriptor as an integer.
 This basically does `io.read(1):byte()`, but catches the error that
@@ -190,14 +195,14 @@ Return value `char` is a number when reading succeeds, nil otherwise.
 
 
 
-# getch:get_char_stdin()
+# lua_getch:get_char_stdin()
 
-`char = getch:get_char_stdin()`
+`char = lua_getch:get_char_stdin()`
 
-This just does `getch.get_char(io.stdin)`.
+This function is just a convenience wrapper for `lua_getch.get_char(io.stdin)`.
 
-This is only here because it is used very often, and makes the usage
-of `getch:get_key_mbs()` easier.
+This is only here because it is a convenient possible argumemt
+to `lua_getch:get_key_mbs()`.
 
 
 
@@ -205,14 +210,13 @@ of `getch:get_key_mbs()` easier.
 
 # getch:get_char_cooked(timeout)
 
-`char = getch:get_char_stdin()`
+`char = getch:get_char_cooked(timeout)`
 
-This disables the LibC line buffering for stdin(`io.stdin:setvbuf("no")`),
-enables raw mode(using `getch:set_raw_mode(io.stdin)`),
+This function enables raw mode(using `getch:set_raw_mode(io.stdin)`),
 tries to read a character with an optional timeout, then restores the
-terminal(enable line buffering, leave raw mode).
+terminal state.
 
-`timeout` is the timeout in seconds to wait for a character.
+`timeout` is an optional timeout in seconds to wait for a character.
 
 Return value `char` is a number when reading succeeds, nil otherwise(e.g. timeout).
 
@@ -224,11 +228,7 @@ Return value `char` is a number when reading succeeds, nil otherwise(e.g. timeou
 
 `resolved, seq = getch:get_key_mbs(get_key, key_table, max_depth, seq)`
 
-Try to resolve a multibyte sequence by calling the
-`get_key` callback function repeatedly,
-and resolving results using the `key_table` recursively.
-
-This enables easy parsing of terminal escape sequences like.
+Attempts to resolve a multibyte terminal escape sequence by repeatedly invoking the `get_key` callback to read input and matching it against entries in `key_table`.
 
 `get_key` is a callback that is called when a new key in the multibyte
 sequence is requested.
