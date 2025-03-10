@@ -77,27 +77,15 @@ end
 
 -- disable buffering, enter raw mode and, get a char, then restore terminal
 function getch.get_char_cooked(timeout)
-	-- disable buffering through libc
-	io.stdin:setvbuf("no")
-
 	-- set raw(non-linebuffered) mode, disable automatic echo of characters
 	getch.set_raw_mode(io.stdin)
-
-	-- restore original mode
-	local function restore()
-		-- leave raw mode
-		getch.restore_mode()
-
-		-- set line buffering
-		io.stdin:setvbuf("line")
-	end
 
 	-- optionally wait up to timeout seconds for stdin to become ready.
 	-- If timeout is reached, nil is returned.
 	if timeout then
-		local ok, stdin_ready = getch.select(timeout, io.stdin)
-		if ok and (not stdin_ready) then
-			restore()
+		local _, stdin_ready = getch.select(timeout, false, io.stdin)
+		if not stdin_ready then
+			getch.restore_mode()
 			return
 		end
 	end
@@ -105,8 +93,8 @@ function getch.get_char_cooked(timeout)
 	-- get the character
 	local char = getch.get_char_stdin()
 
-	restore()
-
+	-- restore state and return
+	getch.restore_mode()
 	return char
 end
 
