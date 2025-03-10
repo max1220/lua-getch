@@ -1,10 +1,9 @@
 #!/usr/bin/env lua5.1
 local getch = require("lua-getch")
--- This example demonstrates a simple blocking getting single characters
--- from the terminal.
+-- This example demonstrates how to read characters from stdin in a blocking way,
+-- but respond to each byte immediately.
 
--- disable buffering through libc
-io.stdin:setvbuf("no")
+print("Entering blocking example(wait for input on stdin).")
 
 -- set raw(non-linebuffered) mode, disable automatic echo of characters
 getch.set_raw_mode(io.stdin)
@@ -16,15 +15,10 @@ while true do
 	print("got character:",char)
 
 	-- quit on q key
-	if (char==("q"):byte()) or (char==("Q"):byte()) then
-		break
-	end
+	if (char == 81) or (char == 113) then break; end
 end
 
 -- restore old terminal mode
 getch.restore_mode()
-
--- enter line-buffered mode
-io.stdin:setvbuf("line")
 
 print("bye!")

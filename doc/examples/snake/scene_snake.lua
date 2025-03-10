@@ -143,7 +143,7 @@ function scene:output()
 	self:output_board(self.board_x,self.board_y, current_border_color, current_border_color)
 
 	-- set the cursor
-	term.write(term.esc_pos(1,1))
+	term.write(term:esc_pos())
 	term.flush()
 end
 
@@ -204,7 +204,7 @@ function scene:on_enter(...)
 	assert(self.cell_w)
 
 	term.write(term.esc_clear)
-	term.write(term.esc_pos())
+	term.write(term:esc_pos())
 end
 
 return scene

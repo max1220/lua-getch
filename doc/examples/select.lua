@@ -1,24 +1,24 @@
 #!/usr/bin/env lua5.1
 local getch = require("lua-getch")
+-- This example demonstrates how to use select to wait for one or more file
+-- descriptors to become ready.
 
--- enable raw mode to read single characters immediately
+print("Starting select example(wait for input without reading).")
+
+-- enable raw mode, non-blocking terminal mode
 getch.set_raw_mode(io.stdin)
 
--- call select with stdin as read_fd, so that when stdin becomes
--- ready for reading within the timeout it is returned.
--- (Returned files are in the same order as arguments, and only
--- files ready for reading or writing are returned).
-print("Print any key within the next 5 seconds.")
 local timeout = 5
-local ok, stdin_ready = getch.select(timeout, io.stdin)
-if stdin_ready then
-	-- this should not block, because a character is ready now.
-	local pressed_key = getch.get_char(io.stdin)
-	print("Key pressed! Key was:", pressed_key)
-elseif ok then
-	print("Timeout! No key was pressed within the timeout!")
+print(("Print any key within the next %d seconds."):format(timeout))
+
+-- do select with stdin checked for reading
+local select_ret, stdin_read_ready = getch.select(timeout, false, io.stdin)
+print("select returned:", select_ret, stdin_read_ready)
+
+if stdin_read_ready then
+	print("Character ready for reading!")
 else
-	print("An error occured!")
+	print("Timeout reached!")
 end
 
 -- restore old terminal mode

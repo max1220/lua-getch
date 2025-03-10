@@ -1,53 +1,36 @@
 #!/usr/bin/env lua5.1
 local getch = require("lua-getch")
-local time = require("time")
+-- This example demonstrates how to read characters from stdin in a non-blocking
+-- way by checking if new characters are available periodically.
 
--- disable buffering through libc
-io.stdin:setvbuf("no")
+print("Entering non-blocking example(checking once per second).")
 
--- set raw(non-linebuffered) mode, disable automatic echo of characters
-getch.set_raw_mode(io.stdin)
+-- set raw(non-linebuffered) mode, disable automatic echo of characters, enter non-blocking mode
+getch.set_raw_mode(io.stdin, true)
 
--- set the non-blocking mode for stdin
-getch.set_nonblocking(io.stdin, true)
-
-print("Press q to quit.")
-local last_char
-while true do
+local last_ch
+local run = true
+while run do
 	-- go to beginning of line, write some info
-	io.write("\r"..os.date("(nonblocking) (press q to quit) %H:%M:%S"))
+	io.write("\r\027[2K"..os.date("(press q to quit) %H:%M:%S "))
+	if last_ch then io.write("last ch=", last_ch, " ") end
 
-	-- get character if any, nil otherwise
-	local char = getch.get_char(io.stdin)
-
-	-- quit on q key
-	if (char==("q"):byte()) or (char==("Q"):byte()) then
-		break
+	-- get characters if any, nil otherwise
+	while true do
+		local char = getch.get_char(io.stdin)
+		if not char then break -- stdin has no char available
+		elseif (char == 81) or (char == 113) then run = false -- q key
+		elseif char then io.write("ch=", char, " "); last_ch = char
+		end
 	end
-
-	-- write status of reading
-	if char then
-		last_char = char
-		io.write(" Current char: "..char)
-	elseif last_char then
-		io.write(" Last char:    "..last_char)
-		io.write(" (idle)")
-	end
-	io.write("      ")
 	io.flush()
 
-	-- intentionally slowed down ~10 characters/s
-	time.sleep(0.1)
+	-- intentionally slowed down for this demo("your application loop here")
+	os.execute("sleep 1")
 end
 print()
 
 -- restore old terminal mode
 getch.restore_mode()
-
--- enter line-buffered mode
-io.stdin:setvbuf("line")
-
--- set blocking mode
-getch.set_nonblocking(io.stdin, false)
 
 print("bye!")

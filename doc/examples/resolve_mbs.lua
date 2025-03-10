@@ -1,6 +1,8 @@
 #!/usr/bin/env lua5.1
 local getch = require("lua-getch")
 
+print("Entering Multi-byte sequence decoding example(read special terminal sequences from stdin).")
+
 print("Press q to quit.")
 local run = true
 while run do
