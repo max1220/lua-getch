@@ -25,7 +25,7 @@ static FILE* get_file_from_lua_or_err(lua_State *L, int index) {
 	FILE* file;
 	if (lua_isnumber(L, index)) {
 		int fd = lua_tonumber(L, index);
-		file = fdopen(fd, "r");
+		file = fdopen(fd, "r+");
 	} else {
 		file = *(FILE**) luaL_checkudata(L, index, LUA_FILEHANDLE);
 	}
@@ -149,103 +149,83 @@ static int l_set_nonblocking(lua_State *L) {
 	return 1;
 }
 
-// wait for file descriptors to become ready
 static int l_select(lua_State *L) {
 	// create two fd sets for select
 	fd_set read_fds, write_fds;
 	FD_ZERO(&read_fds);
 	FD_ZERO(&write_fds);
 
+	// check argument count
 	int arg_count = lua_gettop(L);
-
-	// return if no fds are specified
-	if (arg_count<2) {
+	if (arg_count < 3) {
 		lua_pushnil(L);
-		lua_pushfstring(L, "Requires at least 2 arguments, got: %d!", arg_count);
-	}
-
-	// populate fd sets from Lua variadic arguments
-	int is_write_fds = 0;
-	int max_fd = 0;
-	for (int i=2; i<=arg_count; i++) {
-		if (lua_isnil(L, i)) {
-			// change to different fd set on first nil argument
-			is_write_fds = 1;
-		} else {
-			FILE* file = get_file_from_lua_or_err(L, i);
-			int fd = file_to_fd_or_err(L, file);
-
-			// add fd to current fd set
-			if (fd>max_fd) {
-				max_fd = fd;
-			}
-			if (is_write_fds) {
-				FD_SET(fd, &write_fds);
-			} else {
-				FD_SET(fd, &read_fds);
-			}
-		}
-	}
-
-	// Wait for a change in the fds's(When a new character was written to stdin, or timeout, or error)
-	int ret;
-	if (lua_isnumber(L, 1)) {
-		double timeout = lua_tonumber(L, 1);
-
-		// get integer seconds and micro-seconds
-		int secs = (int)timeout;
-		int usecs = (timeout-(double)secs)*US_IN_S;
-
-		// prepare a tileval struct for reading with a timeout
-		struct timeval tval;
-		tval.tv_sec = secs;
-		tval.tv_usec = usecs;
-
-		// wait with timeout/pooling
-		ret = select(max_fd+1, &read_fds, &write_fds, NULL, &tval);
-	} else {
-		// wait indefinitly
-		ret = select(max_fd+1, &read_fds, &write_fds, NULL, NULL);
-	}
-
-	// check select() return value, return errors if any
-	if (ret==-1) {
-		lua_pushnil(L);
-		lua_pushfstring(L, "select() error: %s", strerror(errno));
+		lua_pushfstring(L, "Requires argument count >=3");
 		return 2;
 	}
 
-	// push FD_ISSET boolean values for each fd passed
-	is_write_fds = 0;
-	for (int i=2; i<=arg_count; i++) {
-		if (lua_isnil(L, i)) {
-			// change to different fd set on first nil argument
-			is_write_fds = 1;
-		} else {
-			FILE* file = get_file_from_lua_or_err(L, i);
-			int fd = file_to_fd_or_err(L, file);
+	// first argument is always timeout, but can be nil
+	int has_tval = 0;
+	struct timeval tval;
+	if (lua_isnumber(L, 1)) {
+		double timeout = lua_tonumber(L, 1);
+		long secs = timeout;
+		if (timeout > 0) {
+			has_tval = 1;
+			tval.tv_sec = secs;
+			tval.tv_usec = (timeout-(double)secs)*US_IN_S;
+		}
+	}
+	
+	
+	// populate read_fds & write_fds from remaining arguments
+	int max_fd = 0;
+	for (int i=2; i<=arg_count; i=i+2) {
+		// get arguments from Lua
+		int is_write = lua_toboolean(L, i);
+		FILE* file = get_file_from_lua_or_err(L, i+1);
+		int fd = file_to_fd_or_err(L, file);
 
-			// remove all fds not present in the fd set after select() from the stack
-			if (is_write_fds) {
-				if (FD_ISSET(fd, &write_fds)==0) {
-					lua_pushboolean(L, 0);
-					lua_replace(L, i);
-				}
-			} else {
-				if (FD_ISSET(fd, &read_fds)==0) {
-					lua_pushboolean(L, 0);
-					lua_replace(L, i);
-				}
-			}
+		// replace with argument with numeric file descriptor
+		lua_pushinteger(L, fd);
+		lua_replace(L, i+1);
+
+		// update max_fd
+		if (fd>max_fd) { max_fd = fd; }
+
+		// update read_fds/write_fds
+		if (is_write) {
+			FD_SET(fd, &write_fds);
+		} else {
+			FD_SET(fd, &read_fds);
 		}
 	}
 
-	// push boolean true to first stack position
-	lua_pushboolean(L, 1);
-	lua_replace(L, 1);
+	// perform configured select() operation
+	int select_ret;
+	if (has_tval) {
+		select_ret = select(max_fd+1, &read_fds, &write_fds, NULL, &tval);
+	} else {
+		select_ret = select(max_fd+1, &read_fds, &write_fds, NULL, NULL);
+	}
 
-	// return true plus an every file descriptor now in the set
-	return arg_count;
+	// first return argument is the select return code
+	lua_pushinteger(L, select_ret);
+	int return_args = 1;
+
+	// write updated values from read_fds/write_fds to Lua return arguments
+	for (int i=2; i<=arg_count; i=i+2) {
+		int is_write = lua_toboolean(L, i);
+		int fd = lua_tointeger(L, i+1);
+		if (is_write) {
+			lua_pushboolean(L, FD_ISSET(fd, &write_fds));
+		} else {
+			lua_pushboolean(L, FD_ISSET(fd, &read_fds));
+		}
+		return_args++;
+	}
+
+	// returns same number of arguments it received
+	return return_args;
 }
 
 
