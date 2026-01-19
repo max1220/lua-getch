@@ -1,0 +1,27 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Prepare Linux
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install pkg-config cmake clang build-essential luarocks -y
+
+    - name: luarocks make
+      run: |
+        luarocks make --local
+        luarocks make --pack-binary-rock
+        luarocks install lua-getch-scm-1.linux-x86_64.rock --local
+        eval "$(luarocks path)"
+        lua <(echo 'require "lua-getch"')
